@@ -1,0 +1,130 @@
+{% extends 'layout.html' %}
+{% block content %}
+<h2 style="text-align: center;">White Balancing with color-cheker passport</h2>    
+<div class="row"  style="margin: 2em;">
+        <div class="col-md-6">
+            <img width="80%"  onclick="inputLeft.click()" id="input_image" src="{{ url_for('static', filename='anon.jpg') }}"
+                 class="rounded border img-fluid float-left"
+                 alt="Pair left">
+            <!-- <p style="text-align: center; margin-top: 1em;">Input Image</p> -->
+        </div>
+        <div class="col-md-6">
+            <img  width="80%" id="output" src="{{ url_for('static', filename='anon.jpg') }}"
+                 class="rounded border img-fluid float-right"
+                 >
+            <!-- <p style="text-align: center; margin-top: 1em;">Output Image</p> -->
+        </div>
+    </div>
+    <div class="row" style="margin: 2em;">
+        <div class="col-md-12">
+            <button onclick="predict()" id="btnPredict" class="btn btn-primary mx-auto d-block float-left">Predict</button>
+        </div>
+    </div>
+    <hr>
+    <h4 style="text-align: center;">Steps</h4>
+    <div class="row" style="margin: 2em;">
+       <div class="col-md-4 mx-auto">
+            <img width="100%" id="bbx" src="{{ url_for('static', filename='dog.jpg') }}"
+                 class="rounded border img-fluid  float-left">
+        </div>
+        <div class="col-md-4 mx-auto">
+            <img width="100%" id="card_circled" src="{{ url_for('static', filename='dog.jpg') }}"
+                 class="rounded border img-fluid  float-left">
+        </div>
+        <div class="col-md-4 mx-auto">
+            <img width="100%" id="card_corrected" src="{{ url_for('static', filename='dog.jpg') }}"
+                 class="rounded border img-fluid  float-left">
+        </div>
+
+    </div>
+
+    <hr>
+    <h4 style="text-align: center;">Evaluation</h4>
+    <div class="row" style="margin: 2em;">
+       <div class="col-md-4 mx-auto">
+            <img width="100%" id="row1" src="{{ url_for('static', filename='dog.jpg') }}"
+                 class="rounded border img-fluid  float-left">
+            <p style="text-align: center;">Gray colors</p>
+        </div>
+        <div class="col-md-4 mx-auto">
+            <img width="100%" id="row2" src="{{ url_for('static', filename='dog.jpg') }}"
+                 class="rounded border img-fluid  float-left">
+                 <p style="text-align: center;">Normal colors</p>
+        </div>
+        <div class="col-md-4 mx-auto">
+            <img width="100%" id="row3" src="{{ url_for('static', filename='dog.jpg') }}"
+                 class="rounded border img-fluid  float-left">
+                 <p style="text-align: center;">Skin colors</p>
+        </div>
+
+    </div>
+    
+   
+
+{% endblock %}
+{% block js %}
+    <script>
+        let btnPredict = document.getElementById("btnPredict")
+        let inputImage = document.getElementById('input_image');
+        
+        let output = document.getElementById("output");
+        let bbx = document.getElementById("bbx");
+        let card_circled = document.getElementById("card_circled");
+        let card_perspective = document.getElementById("card_corrected");
+        let row1 = document.getElementById("row1");
+        let row2 = document.getElementById("row2");
+        let row3 = document.getElementById("row3");
+        
+        let inputLeft = document.createElement('input');
+        
+        let data = {inputImage: null};
+        inputLeft.type = 'file';
+        inputLeft.accept = 'image/*'
+
+        inputLeft.onchange = e => {
+            resetBtnPredict()
+            setImageFromObj(inputImage, e, (file) => {
+                data.inputImage = file;
+            })
+        };
+
+
+        function resetBtnPredict() {
+            btnPredict.disabled = false;
+            btnPredict.innerText = 'Predict'
+        }
+
+        predict = () => {
+            if (Object.values(data).includes(null))
+                return;
+            btnPredict.disabled = true;
+            btnPredict.innerText = "calculating ...";
+            formData = new FormData();
+            formData.append('inputImage', data.inputImage);
+          
+            fetch('/predict', {
+                method: 'POST',
+                body: formData
+            }).then((r) => r.json().then((data) => {
+                console.log(data);
+                output.src =  `${data.output}`;
+                bbx.src =  "../static/bbx.jpg";
+                card_circled.src =  "../static/card_circled.jpg";
+                card_corrected.src =  "../static/card_corrected.jpg";
+                row1.src =  "../static/row1.jpg";
+                row2.src =  "../static/row2.jpg";
+                row3.src =  "../static/row3.jpg";
+                
+                resetBtnPredict()
+            }))
+        };
+
+        function setImageFromObj(element, obj, fun) {
+            const file = obj.target.files[0];
+            element.src = URL.createObjectURL(file);
+            fun(file)
+        }
+
+
+    </script>
+{% endblock %}
